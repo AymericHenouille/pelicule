@@ -1,14 +1,28 @@
-const { dest } = require('gulp');
+const { src, dest, watch, series } = require('gulp');
 const gulpTypescript = require('gulp-typescript');
-const minify = require('gulp-minify');
+const gulpClean = require('gulp-clean');
 
 const tsProject = gulpTypescript.createProject('tsconfig.json');
+const { outDir } = tsProject.options;
 
-function compile() {
+function build() {
   return tsProject.src()
     .pipe(tsProject()).js
-    .pipe(dest('bin'));
+    .pipe(dest(outDir));
 }
 
-exports.compile = compile;
-exports.default = compile;
+function watchSrc() {
+  return watch('src/**/*.ts', { ignoreInitial: false }, series(
+    clean, 
+    build
+  ));
+}
+
+function clean() {
+  return src(outDir, { read: false, allowEmpty: true })
+    .pipe(gulpClean({ force: true }));
+}
+
+exports.build = build;
+exports.watch = watchSrc;
+exports.clean = clean;

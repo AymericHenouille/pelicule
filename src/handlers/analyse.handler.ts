@@ -23,7 +23,7 @@ export function analyseCommandHandler(): CommandHandler<AnalyseArgument> {
     const fileExplorer: FileExplorer = new FileExplorer(argv.folder, argv);
     const workerService: WorkerService<AnalyseArgument> = new WorkerService<AnalyseArgument>(argv);
     try {
-      const {files, oldAnalysis}: AnalyseData = await findFilesToAnalyse(fileExplorer, pscFile, argv);
+      const { files, oldAnalysis }: AnalyseData = await findFilesToAnalyse(fileExplorer, pscFile, argv);
       log(argv, `Found ${files.length} files in ${formatTimeMesage(performance.now() - startTick)}`);
       
       const hashedMedia: MediaInfo[] = await workerService.runJobs<string, MediaInfo>(files, 'hashing');
@@ -66,6 +66,15 @@ async function findFilesToAnalyse(fileExplorer: FileExplorer, pscFile: string, {
   };
 }
 
+/**
+ * Format the report.
+ * 
+ * @param mediaInfos The media infos.
+ * @param oldAnalysis The old analysis.
+ * @param startTick The start tick.
+ * @param pscFile The psc file.
+ * @returns The formatted report.
+ */
 function formatReport(mediaInfos: MediaInfo[], oldAnalysis: MediaInfo[], startTick: number, pscFile: string): string {
   const time: string = formatTimeMesage(performance.now() - startTick);
   const savedFile: string = pscFile;

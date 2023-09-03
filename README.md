@@ -1,4 +1,4 @@
-# Photo sorter
+# Pelicule
 
 This project is a simple photo sorter. It takes a directory of photos and sorts them into subdirectories based on the date the photo was taken. It uses the EXIF data from the photo to determine the date.
 

@@ -3,7 +3,7 @@
     "types": ["node"],
     "target": "ES2022",
     "module": "commonjs",
-    "outDir": "dist",
+    "outDir": "bin",
     "resolveJsonModule": true,
     "esModuleInterop": true,
     "noImplicitReturns": false,
