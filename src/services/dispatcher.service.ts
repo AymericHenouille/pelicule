@@ -1,5 +1,5 @@
 import { AnalyseArgument, SortArgument } from '../models/arguments.model';
-import { MediaHash, MediaInfo } from '../models/report.model';
+import { MediaInfo } from '../models/report.model';
 import { WorkerStatus } from '../models/worker-status.model';
 import { AnalyseService } from './analyse.service';
 import { SortingService } from './sorting.service';
@@ -18,12 +18,12 @@ export class DispatcherService<A> {
         return new AnalyseService(this.argv as AnalyseArgument).hashing(
           items as string[], 
           chunk as string[], 
-          update as (status: WorkerStatus<string, AnalyseArgument, MediaHash>) => void
+          update as (status: WorkerStatus<string, AnalyseArgument, MediaInfo>) => void
         );
       case 'compare':
         return new AnalyseService(this.argv as AnalyseArgument).compare(
-          items as MediaHash[],
-          chunk as MediaHash[],
+          items as MediaInfo[],
+          chunk as MediaInfo[],
           update as (status: WorkerStatus<MediaInfo, AnalyseArgument, MediaInfo>) => void
         );
       case 'dating':

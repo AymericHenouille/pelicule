@@ -2,7 +2,7 @@ import chalk from 'chalk';
 import { join } from 'path';
 import { AnalyseArgument } from '../models/arguments.model';
 import { CommandHandler } from '../models/handler.model';
-import { MediaHash, MediaInfo } from '../models/report.model';
+import { MediaInfo } from '../models/report.model';
 import { FileExplorer } from '../services/file-explorer.service';
 import { WorkerService } from '../services/worker.service';
 import { formatTimeMesage, log } from '../utils/log.util';
@@ -20,6 +20,7 @@ export function analyseCommandHandler(): CommandHandler<AnalyseArgument> {
   return async (argv: AnalyseArgument) => {
     const startTick: number = performance.now();
     const pscFile: string = argv.output ?? join(argv.folder, '.psc.json');
+    log(argv, chalk.gray(`Analysing ${argv.folder}...`));
     const fileExplorer: FileExplorer = new FileExplorer(argv.folder, argv);
     const workerService: WorkerService<AnalyseArgument> = new WorkerService<AnalyseArgument>(argv);
     try {
@@ -29,7 +30,7 @@ export function analyseCommandHandler(): CommandHandler<AnalyseArgument> {
       const hashedMedia: MediaInfo[] = await workerService.runJobs<string, MediaInfo>(files, 'hashing');
       log(argv, `Hashed ${hashedMedia.length} files in ${formatTimeMesage(performance.now() - startTick)}`);
 
-      const mediaInfos: MediaInfo[] = await workerService.runJobs<MediaHash, MediaInfo>(hashedMedia, 'compare');
+      const mediaInfos: MediaInfo[] = await workerService.runJobs<MediaInfo, MediaInfo>(hashedMedia, 'compare');
       log(argv, `Compared ${mediaInfos.length} files in ${formatTimeMesage(performance.now() - startTick)}`);
 
       const mediaDateInfos: MediaInfo[] = await workerService.runJobs<MediaInfo, MediaInfo>(mediaInfos, 'dating');

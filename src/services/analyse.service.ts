@@ -5,7 +5,7 @@ import { readFile, stat } from 'fs/promises';
 import Jimp, { compareHashes, create } from 'jimp';
 import { basename } from 'path';
 import { AnalyseArgument } from '../models/arguments.model';
-import { MediaHash, MediaInfo } from '../models/report.model';
+import { DateInfo, MediaInfo } from '../models/report.model';
 import { WorkerStatus } from '../models/worker-status.model';
 
 function buildCompareUpdate(path: string, index: number): WorkerStatus<string, AnalyseArgument, MediaInfo> {
@@ -78,20 +78,20 @@ export class AnalyseService {
     update(buildDone('Hashing', result, chunk.length));
   }
 
-  public async compare(items: MediaHash[], chunk: MediaHash[], update: (status: WorkerStatus<MediaInfo, AnalyseArgument, MediaInfo>) => void): Promise<void> {
+  public async compare(items: MediaInfo[], chunk: MediaInfo[], update: (status: WorkerStatus<MediaInfo, AnalyseArgument, MediaInfo>) => void): Promise<void> {
     const targetRootDir: string = this.argv.folder;
     const result: MediaInfo[] = [];
     for (let index: number = 0 ; index < chunk.length ; ++index) {
-      const media: MediaHash = chunk[index];
+      const media: MediaInfo = chunk[index];
       result.push({
         path: media.path,
         hash: media.hash,
-        copy: items.filter((item: MediaHash) => {
+        copy: items.filter((item: MediaInfo) => {
           if (item.path === media.path) return false;
           if (item.hash === null || media.hash === null) return false;
           const distance: number = compareHashes(item.hash, media.hash);
           return distance <= this.argv.distance;
-        }).map((item: MediaHash) => item.path.replace(targetRootDir, '.')),
+        }).map((item: MediaInfo) => item.path.replace(targetRootDir, '.')),
         tags: [],
       });
       update(buildCompareUpdate(media.path, index));
@@ -109,11 +109,16 @@ export class AnalyseService {
         hash,
         copy,
         tags,
-        date: await this.findDate(path),
+        date: this.buildDateInfo(await this.findDate(path)),
       });
       update(buildDatingUpdate(path, index));
     }
     update(buildDone('Dating', result, chunk.length));
+  }
+
+  private buildDateInfo(date: string): DateInfo {
+    const [year, month, day]: string[] = date.split('-');
+    return { year, month, day };
   }
 
   private async findDate(path: string): Promise<string> {

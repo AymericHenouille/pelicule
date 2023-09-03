@@ -101,8 +101,23 @@ export class WorkerService<A> {
     type MapFn = (value: T, index: number) => T[];
     const finalChunksNumber: number = Math.min(array.length, chunksNumber);
     const chunkSize: number = Math.ceil(array.length / finalChunksNumber);
-    const mapFn: MapFn = (_, index) => array.slice(index * chunkSize, (index + 1) * chunkSize);
+    const mapFn: MapFn = (_, index) => this.shuffle(array)
+      .slice(index * chunkSize, (index + 1) * chunkSize);
     return Array.from({ length: chunksNumber }, mapFn);
+  }
+
+  /**
+   * Shuffle an array.
+   * @param array The array to shuffle.
+   * @returns The shuffled array.
+   */
+  private shuffle<T>(array: T[]): T[] {
+    const shuffled: T[] = [...array];
+    for (let index: number = shuffled.length - 1 ; index > 0 ; --index) {
+      const randomIndex: number = Math.floor(Math.random() * (index + 1));
+      [shuffled[index], shuffled[randomIndex]] = [shuffled[randomIndex], shuffled[index]];
+    }
+    return shuffled;
   }
     
 }

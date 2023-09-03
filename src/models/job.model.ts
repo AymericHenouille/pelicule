@@ -1,1 +1,0 @@
-export type Job<T, R> = (data: T[]) => Promise<R>;

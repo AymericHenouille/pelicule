@@ -3,22 +3,14 @@ import { SortArgument } from '../models/arguments.model';
 import { MediaInfo } from '../models/report.model';
 
 function buildPattern(media: MediaInfo): { [key: string]: string } {
-  const date: string = media.date ?? '';
-  const year: string = date.substring(0, 4) || '??';
-  const month: string = date.substring(5, 7) || '??';
-  const day: string = date.substring(8, 10) || '??';
-  const hour: string = date.substring(12, 14) || '??';
-  const minute: string = date.substring(15, 16) || '??';
-  const second: string = date.substring(17, 19) || '??';
+  const year: string = media.date?.year ?? '??';
+  const month: string = media.date?.month ?? '??';
+  const day: string = media.date?.day ?? '??';
   return {
     file_name: basename(media.path),
-    date,
     year,
     month,
     day,
-    hour,
-    minute,
-    second,
     hash: media.hash ?? '',
   };
 }
