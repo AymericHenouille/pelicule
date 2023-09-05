@@ -33,19 +33,15 @@ export class PatternService {
   public parse(media: MediaInfo, toParse: string = this.argv.pattern): string {
     const pattern: { [key: string]: string } = buildPattern(media);
     const keys: string[] = Object.keys(pattern);
-
     const paths: string[] = toParse.replace(sep, '{separator}').split('{separator}');
-    const parsed: string[] = paths.map(path => {
-      for (const key of keys) {
-        path = path.replaceAll(`{${key}}`, pattern[key]);
-      }
-      return path;
-    });
+    const parsed: string[] = paths.map(
+      (path: string) => keys.reduce(
+        (acc: string, key: string) => acc.replaceAll(`{${key}}`, pattern[key]), path)
+    );
     return this.normalizePath(parsed, pattern.file_name);
   }
 
   private normalizePath(parsed: string[], fileName: string): string {
-    console.log(parsed);
     const valid: string[] = takeWhile(parsed, (section) => !section.includes('??'));
     const lastItem: string = valid.length > 0
       ? valid[valid.length - 1]

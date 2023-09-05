@@ -1,5 +1,4 @@
 import Jimp, { create } from 'jimp';
-import { Argument } from '../models/arguments.model';
 import { MediaInfo } from '../models/report.model';
 import { Transformer } from '../models/transform.model';
 
@@ -25,14 +24,6 @@ function jimpCanHash(path: string): boolean {
 export class HashTransformer<T> implements Transformer<Partial<MediaInfo>, Partial<MediaInfo>> {
 
   public readonly transformerName: string = 'Hashing';
-
-  /**
-   * Creates a new HashTransformer instance.
-   * @param argv The argument to use.
-   */
-  public constructor(
-    private readonly argv: Argument<T>,
-  ) { }
 
   public async transform(item: Partial<MediaInfo>): Promise<Partial<MediaInfo>> {
     const { path } = item;

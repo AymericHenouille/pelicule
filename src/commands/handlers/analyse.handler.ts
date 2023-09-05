@@ -18,34 +18,21 @@ type AnalyseData = {
  */
 export function analyseCommandHandler(): CommandHandler<AnalyseArgument> {
   return async (argv: AnalyseArgument) => {
-    const startTick: number = performance.now();
-    const pscFile: string = argv.output ?? join(argv.folder, '.psc.json');
-    log(argv, chalk.gray(`Analysing ${argv.folder}...`));
-    const fileExplorer: FileExplorer = new FileExplorer(argv.folder, argv);
-    const workerService: WorkerService<AnalyseArgument> = new WorkerService<AnalyseArgument>(argv);
     try {
+      const startTick: number = performance.now();
+      const pscFile: string = argv.output ?? join(argv.folder, '.psc.json');
+      log(argv, chalk.gray(`Analysing ${argv.folder}...`));
+      const fileExplorer: FileExplorer = new FileExplorer(argv.folder, argv);
+      const workerService: WorkerService<AnalyseArgument> = new WorkerService<AnalyseArgument>(argv);
       const { files, oldAnalysis }: AnalyseData = await findFilesToAnalyse(fileExplorer, pscFile, argv);
-      log(argv, `Found ${files.length} files in ${formatTimeMesage(performance.now() - startTick)}`);
-      
-      const hashedMedia: MediaInfo[] = await workerService.runJobs<string, MediaInfo>(files, 'hashing');
-      log(argv, `Hashed ${hashedMedia.length} files in ${formatTimeMesage(performance.now() - startTick)}`);
-
-      const mediaInfos: MediaInfo[] = await workerService.runJobs<MediaInfo, MediaInfo>(hashedMedia, 'compare');
-      log(argv, `Compared ${mediaInfos.length} files in ${formatTimeMesage(performance.now() - startTick)}`);
-
-      const mediaDateInfos: MediaInfo[] = await workerService.runJobs<MediaInfo, MediaInfo>(mediaInfos, 'dating');
-      log(argv, `Dated ${mediaDateInfos.length} files in ${formatTimeMesage(performance.now() - startTick)}`);
-
-      const fullMediaDateInfos: MediaInfo[] = [...mediaDateInfos, ...oldAnalysis];
+      const mediaInfos: Partial<MediaInfo>[] = files.map((path: string) => ({ path }));
+      log(argv, `Found ${mediaInfos.length} files in ${formatTimeMesage(startTick)}`);
+      const analysedMediaInfo: MediaInfo[] = await workerService.runJobs<Partial<MediaInfo>, MediaInfo>(mediaInfos, 'analyse');
+      log(argv, `Analysed ${analysedMediaInfo.length} files in ${formatTimeMesage(startTick)}`);
+      const fullMediaDateInfos: MediaInfo[] = [...analysedMediaInfo, ...oldAnalysis];
       await fileExplorer.writeJson(pscFile, fullMediaDateInfos);
-      
-      if (argv.verbose) {
-        const report: string = formatReport(mediaDateInfos, oldAnalysis, startTick, pscFile);
-        log(argv, report);
-      }
-    } catch (error) {
-      console.error(error);
-    }
+      log(argv, formatReport(analysedMediaInfo, oldAnalysis, startTick, pscFile));
+    } catch (error) { console.error(error); }
   };
 }
 
@@ -61,7 +48,7 @@ async function findFilesToAnalyse(fileExplorer: FileExplorer, pscFile: string, {
   return {
     files: files.filter((file: string) => {
       const targetFile: string = file.replace(folder, '.');
-      return !oldAnalysis.some((mediaInfo: MediaInfo) => mediaInfo.path === targetFile);
+      return !oldAnalysis.some(({path}: MediaInfo) => path === targetFile);
     }),
     oldAnalysis,
   };
@@ -78,9 +65,8 @@ async function findFilesToAnalyse(fileExplorer: FileExplorer, pscFile: string, {
  */
 function formatReport(mediaInfos: MediaInfo[], oldAnalysis: MediaInfo[], startTick: number, pscFile: string): string {
   const time: string = formatTimeMesage(performance.now() - startTick);
-  const savedFile: string = pscFile;
   return `
-  Report saved to ${chalk.gray(savedFile)}.
+  Report saved to ${chalk.gray(pscFile)}.
 
   ${chalk.magenta(mediaInfos.length)} files analysed in ${chalk.green(time)}.
 

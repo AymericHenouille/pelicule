@@ -19,9 +19,9 @@ export function shuffle<T>(list: T[]): T[] {
  * @returns The list of chunks.
  */
 export function chunk<T>(list: T[], size: number): T[][] {
-  const chunks: T[][] = [];
-  for (let i: number = 0; i < list.length; i += size) {
-    chunks.push(list.slice(i, i + size));
-  }
-  return chunks;
+  type MapFn = (value: T, index: number) => T[];
+  const finalChunksNumber: number = Math.min(list.length, size);
+  const chunkSize: number = Math.ceil(list.length / finalChunksNumber);
+  const mapFn: MapFn = (_, index) => list.slice(index * chunkSize, (index + 1) * chunkSize);
+  return Array.from({ length: size }, mapFn);
 }

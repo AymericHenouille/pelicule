@@ -4,14 +4,17 @@ import { join } from 'path';
 import { PassThrough } from 'stream';
 import { Worker, isMainThread, parentPort, workerData } from 'worker_threads';
 import { Argument } from '../models/arguments.model';
-import { WorkerData, WorkerProgress, WorkerStatus } from '../models/worker-status.model';
+import { TransformProgress } from '../models/transform.model';
+import { Dispatcher, WorkerData, WorkerProgress, WorkerStatus } from '../models/worker-status.model';
+import { DispatcherFn, dispatch } from '../transform/dispatcher.transform';
+import { chunk, shuffle } from '../utils/list.util';
 import { log } from '../utils/log.util';
-import { Dispatcher, DispatcherService } from './dispatcher.service';
 
 if (!isMainThread) {
-  const { items, chunk, job, argv }: WorkerData<unknown, unknown> = workerData;
-  const dispatcherService: DispatcherService<typeof argv> = new DispatcherService<typeof argv>(argv);
-  dispatcherService.dispatch(job, items, chunk, (status: WorkerStatus<unknown>) => parentPort?.postMessage(status));
+  const dispatcher: DispatcherFn<unknown> = dispatch(workerData);
+  dispatcher((status: TransformProgress<unknown>) => parentPort?.postMessage(status))
+    .then((result: unknown[]) => parentPort?.postMessage({ status: 'done', result }))
+    .catch((error: Error) => parentPort?.postMessage({ status: 'error' }));
 }
 
 /**
@@ -45,41 +48,18 @@ export class WorkerService<A> {
    * @returns The compiled results of the jobs.
    */
   public async runJobs<T, R>(items: T[], job: Dispatcher): Promise<R[]> {
-    const chunks: T[][] = this.buildChunks(items, this.argv.workers);
-    const multiBar: MultiBar = new MultiBar({
-      format: '{stepName} [{bar}] {value}/{total} | {target}',
-      hideCursor: true,
-      stream: this.argv.verbose ? process.stdout : new PassThrough(),
-      formatValue: (value: number, _, type: string) => {
-        if (type === 'total') return chalk.bold(value.toString());
-        if (type === 'value') {
-          const length: number = value.toString().length;
-          const targetLength: number = chunks[0].length.toString().length;
-          const padding: string = ' '.repeat(targetLength - length);
-          const formatedValue: string = padding + value;
-          return chalk.gray(formatedValue);
-        }
-        return value.toString();
-      },
-    }, Presets.shades_grey);
-    log(this.argv, `Running ${chalk.magenta(chunks.length)} chunks of ${chalk.bold(chunks[0].length)} jobs...`);
-    const results: PromiseSettledResult<R[]>[] = await Promise.allSettled(chunks.map((chunk: T[]) => this.runChunk<T, R>(items, chunk, job, multiBar)));
+    const shuffledItems: T[] = shuffle(items);
+    const chunks: T[][] = chunk(shuffledItems, this.argv.workers);
+    const multiBar: MultiBar = this.createMultibar(chunks);
+    const chunkResults: Promise<R[]>[] = chunks.map((chunk: T[]) => this.runChunk<T, R>(items, chunk, job, multiBar))
+    const results: R[][] = (await Promise.allSettled(chunkResults))
+      .filter((result) => result.status === 'fulfilled')
+      .map((result) => (result as PromiseFulfilledResult<R[]>).value);
     multiBar.stop();
     if (this.argv.verbose) console.clear();
-    return results
-      .filter((result) => result.status === 'fulfilled')
-      .map((result) => (result as PromiseFulfilledResult<R[]>).value)
-      .flat();
+    return results.flat();
   }
 
-  /**
-   * Run a job on a chunk of items.
-   * @param items The items to process.
-   * @param chunk The chunk of items to process.
-   * @param job The job to run.
-   * @param multiBar The multi bar to update.
-   * @returns The compiled results of the job.
-   */
   private runChunk<T, R>(items: T[], chunk: T[], job: Dispatcher, multiBar: MultiBar): Promise<R[]> {
     const bar: SingleBar = multiBar.create(chunk.length, 0);
     bar.update(0, { stepName: job, target: chalk.yellow('starting') });
@@ -96,7 +76,7 @@ export class WorkerService<A> {
     const worker: Worker = new Worker(WorkerService.URL, { workerData });
     return new Promise((resolve, reject) => worker
       .on('message', (message: WorkerStatus<R>) => this.readChunkMessage(message, bar, resolve))
-      .on('error', (error: ErrorEvent) => { bar.stop(); reject(error);  })
+      .on('error', (error: ErrorEvent) => { bar.stop(); reject(error); })
       .on('exit', (code: number) => {
         if (code !== 0) {
           bar.stop();
@@ -113,42 +93,32 @@ export class WorkerService<A> {
    * @param bar The progress bar to update.
    * @param resolve The resolve function of the promise. It will be called when the job is done.
    */
-  private readChunkMessage<T, R>(message: WorkerStatus<R>, bar: SingleBar, resolve: (value: R[]) => void): void {
+  private readChunkMessage<R>(message: WorkerStatus<R>, bar: SingleBar, resolve: (value: R[]) => void): void {
     const progress: WorkerProgress = message.progress;
     bar.update(progress.processProgress, {
       stepName: chalk.bold(progress.stepName),
       target: progress.target
     });
     if (message.status === 'done') resolve(message.result);
-  } 
-
-  /**
-   * Split an array into chunks.
-   * @param array The array to split.
-   * @param chunksNumber The number of chunks.
-   * @returns The array of chunks.
-   */
-  private buildChunks<T>(array: T[], chunksNumber: number): T[][] {
-    type MapFn = (value: T, index: number) => T[];
-    const finalChunksNumber: number = Math.min(array.length, chunksNumber);
-    const chunkSize: number = Math.ceil(array.length / finalChunksNumber);
-    const mapFn: MapFn = (_, index) => this.shuffle(array)
-      .slice(index * chunkSize, (index + 1) * chunkSize);
-    return Array.from({ length: chunksNumber }, mapFn);
   }
 
-  /**
-   * Shuffle an array.
-   * @param array The array to shuffle.
-   * @returns The shuffled array.
-   */
-  private shuffle<T>(array: T[]): T[] {
-    const shuffled: T[] = [...array];
-    for (let index: number = shuffled.length - 1 ; index > 0 ; --index) {
-      const randomIndex: number = Math.floor(Math.random() * (index + 1));
-      [shuffled[index], shuffled[randomIndex]] = [shuffled[randomIndex], shuffled[index]];
-    }
-    return shuffled;
+  private createMultibar<T>(chunks: T[][]): MultiBar {
+    const chunksSize: number = Math.max(...chunks.map((chunk: T[]) => chunk.length));
+    log(this.argv, `Running ${chalk.magenta(chunks.length)} chunks of ${chalk.bold(chunksSize)} jobs...`);
+    return new MultiBar({
+      format: '{stepName} [{bar}] {value}/{total} | {target}',
+      hideCursor: true,
+      stream: this.argv.verbose ? process.stdout : new PassThrough(),
+      formatValue: (value: number, _, type: string) => {
+        if (type === 'total') return chalk.bold(value.toString());
+        if (type === 'value') {
+          const {length}: string = value.toString();
+          const padding: string = ' '.repeat(chunksSize - length);
+          return chalk.gray(padding + value);
+        }
+        return value.toString();
+      },
+    }, Presets.shades_grey);
   }
     
 }

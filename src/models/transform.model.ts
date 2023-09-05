@@ -1,7 +1,8 @@
 export type TransformProgressStatus = 'progress' | 'done' | 'error';
 
-export type TransformProgress = {
+export type TransformProgress<T> = {
   status: TransformProgressStatus;
+  result?: T[];
   progress?: {
     stepName: string;
     target: string;

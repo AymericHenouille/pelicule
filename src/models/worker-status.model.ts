@@ -1,4 +1,4 @@
-import { Dispatcher } from '../services/dispatcher.service';
+export type Dispatcher = 'analyse';
 
 export type WorkerData<T, A> = { items: T[], chunk: T[], job: Dispatcher, argv: A };
 

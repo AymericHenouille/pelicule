@@ -9,6 +9,11 @@ import { TransformUpdater, Transformer, TransformerProcessor } from '../models/t
  */
 export class ChainTransformerProcessor<T> extends TransformerProcessor<Partial<T>, Partial<T>> {
 
+  /**
+   * Creates a new ChainTransformerProcessor instance.
+   * @param transformers The list of transformers to chain.
+   * @param stepStatusBuilder The function to use to build the status of the current step.
+   */
   public constructor(
     protected readonly transformers: Transformer<Partial<T>, Partial<T>>[],
     protected readonly stepStatusBuilder?: (item: Partial<T>) => string,
@@ -38,9 +43,11 @@ export class ChainTransformerProcessor<T> extends TransformerProcessor<Partial<T
           return transformer.transform(previousResult);
         }, Promise.resolve(currentInput));
         outputList.push(result);
-      } catch (error) { console.error(error); }
+      } catch (error) {
+        updateStatus({ status: 'error' });
+        console.error(error); 
+      }
     }
-    updateStatus({ status: 'done' });
     return outputList;
   }
 
