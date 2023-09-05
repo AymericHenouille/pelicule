@@ -8,7 +8,7 @@ import { AnalyseArgument } from '../models/arguments.model';
 import { DateInfo, MediaInfo } from '../models/report.model';
 import { WorkerStatus } from '../models/worker-status.model';
 
-function buildCompareUpdate(path: string, index: number): WorkerStatus<string, AnalyseArgument, MediaInfo> {
+function buildCompareUpdate(path: string, index: number): WorkerStatus<MediaInfo> {
   return {
     status: 'progress',
     progress: {
@@ -20,7 +20,7 @@ function buildCompareUpdate(path: string, index: number): WorkerStatus<string, A
   };
 }
 
-function buildHashUpdate(path: string, index: number): WorkerStatus<string, AnalyseArgument, MediaInfo> {
+function buildHashUpdate(path: string, index: number): WorkerStatus<MediaInfo> {
   return {
     status: 'progress',
     progress: {
@@ -32,7 +32,7 @@ function buildHashUpdate(path: string, index: number): WorkerStatus<string, Anal
   };
 }
 
-function buildDatingUpdate(path: string, index: number): WorkerStatus<string, AnalyseArgument, MediaInfo> {
+function buildDatingUpdate(path: string, index: number): WorkerStatus<MediaInfo> {
   return {
     status: 'progress',
     progress: {
@@ -44,7 +44,7 @@ function buildDatingUpdate(path: string, index: number): WorkerStatus<string, An
   };
 }
 
-function buildDone<T>(stepName: string, result: T[], total: number): WorkerStatus<string, AnalyseArgument, T> {
+function buildDone<T>(stepName: string, result: T[], total: number): WorkerStatus<T> {
   return {
     status: 'done',
     progress: {
@@ -62,7 +62,7 @@ export class AnalyseService {
     private readonly argv: AnalyseArgument,
   ) { }
 
-  public async hashing(items: string[], chunk: string[], update: (status: WorkerStatus<string, AnalyseArgument, MediaInfo>) => void): Promise<void> {
+  public async hashing(items: string[], chunk: string[], update: (status: WorkerStatus<MediaInfo>) => void): Promise<void> {
     const result: MediaInfo[] = [];
     for (let index: number = 0 ; index < chunk.length ; ++index) {
       const path: string = chunk[index];
@@ -78,7 +78,7 @@ export class AnalyseService {
     update(buildDone('Hashing', result, chunk.length));
   }
 
-  public async compare(items: MediaInfo[], chunk: MediaInfo[], update: (status: WorkerStatus<MediaInfo, AnalyseArgument, MediaInfo>) => void): Promise<void> {
+  public async compare(items: MediaInfo[], chunk: MediaInfo[], update: (status: WorkerStatus<MediaInfo>) => void): Promise<void> {
     const targetRootDir: string = this.argv.folder;
     const result: MediaInfo[] = [];
     for (let index: number = 0 ; index < chunk.length ; ++index) {
@@ -99,7 +99,7 @@ export class AnalyseService {
     update(buildDone('Comparing', result, chunk.length));
   }
 
-  public async dating(items: MediaInfo[], chunk: MediaInfo[], update: (status: WorkerStatus<MediaInfo, AnalyseArgument, MediaInfo>) => void): Promise<void> {
+  public async dating(items: MediaInfo[], chunk: MediaInfo[], update: (status: WorkerStatus<MediaInfo>) => void): Promise<void> {
     const targetRootDir: string = this.argv.folder;
     const result: MediaInfo[] = [];
     for (let index: number = 0 ; index < chunk.length ; ++index) {
@@ -136,21 +136,12 @@ export class AnalyseService {
   }
 
   private async hash(path: string): Promise<string | null> {
-    if (!this.canHash(path)) return null;
     try {
       const image: Jimp = await create(path);
       return image.hash();
     } catch (error) { return null; }
   }
 
-  private canHash(path: string): boolean {
-    const parsedPath: string = path.toLowerCase();
-    return parsedPath.endsWith('.png') 
-      || parsedPath.endsWith('.jpg') 
-      || parsedPath.endsWith('.jpeg') 
-      || parsedPath.endsWith('.bmp') 
-      || parsedPath.endsWith('.tiff') 
-      || parsedPath.endsWith('.gif');
-  }
+  
 
 }

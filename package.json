@@ -1,7 +1,7 @@
 {
   "name": "pelicule",
   "version": "1.0.0",
-  "description": "",
+  "description": "Nodejs tool for manage a huge amount of photos and videos.",
   "main": "./bin/index.js",
   "scripts": {
     "build": "gulp build",
@@ -12,8 +12,8 @@
   "bin": {
     "pel": "./bin/index.js"
   },
-  "keywords": [],
-  "author": "",
+  "keywords": ["pel", "photo", "video", "exif", "sorter"],
+  "author": "AymericHenouille",
   "license": "ISC",
   "devDependencies": {
     "@types/chalk": "^2.2.0",

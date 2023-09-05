@@ -1,10 +1,10 @@
 import { join } from 'path';
-import { SortArgument } from '../models/arguments.model';
-import { CommandHandler } from '../models/handler.model';
-import { MediaInfo } from '../models/report.model';
-import { FileExplorer } from '../services/file-explorer.service';
-import { WorkerService } from '../services/worker.service';
-import { formatTimeMesage, log } from '../utils/log.util';
+import { SortArgument } from '../../models/arguments.model';
+import { CommandHandler } from '../../models/handler.model';
+import { MediaInfo } from '../../models/report.model';
+import { FileExplorer } from '../../services/file-explorer.service';
+import { WorkerService } from '../../services/worker.service';
+import { formatTimeMesage, log } from '../../utils/log.util';
 
 export function sortCommandHandler(): CommandHandler<SortArgument> {
   return async (argv: SortArgument) => {

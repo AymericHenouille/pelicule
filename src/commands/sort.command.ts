@@ -1,7 +1,7 @@
 import { Argv, CommandModule } from 'yargs';
-import { sortCommandHandler } from '../handlers/sort.handler';
 import { SortArgument } from '../models/arguments.model';
 import { defaultOptionBuilder } from './default.options';
+import { sortCommandHandler } from './handlers/sort.handler';
 
 export const sortCommand: CommandModule<SortArgument, SortArgument> = {
   command: 'sort [folder]',

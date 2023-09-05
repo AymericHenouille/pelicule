@@ -1,5 +1,4 @@
 import { ArgumentsCamelCase } from 'yargs';
-import { MediaInfo } from './report.model';
 
 /**
  * Command handler.
@@ -13,11 +12,4 @@ import { MediaInfo } from './report.model';
  * }
  */
 export type CommandHandler<T> = (argv: ArgumentsCamelCase<T>) => void | Promise<void>;
-
-export type AnalyseWorkerData = {
-  currentFile: string,
-  step: number,
-  stepProgress: number,
-  mediaInfo: MediaInfo[],
-}
 

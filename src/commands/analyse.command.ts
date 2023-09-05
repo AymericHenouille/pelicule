@@ -1,7 +1,7 @@
 import { Argv, CommandModule } from 'yargs';
-import { analyseCommandHandler } from '../handlers/analyse.handler';
 import { AnalyseArgument } from '../models/arguments.model';
 import { defaultOptionBuilder } from './default.options';
+import { analyseCommandHandler } from './handlers/analyse.handler';
 
 /**
  * Analyse command.

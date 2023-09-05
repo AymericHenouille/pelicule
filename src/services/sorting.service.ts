@@ -16,7 +16,7 @@ function buildPath(folder: string, path: string): string {
   return join(folder, path);
 }
 
-function buildSortUpdate(path: string, index: number): WorkerStatus<string, SortArgument, MediaInfo> {
+function buildSortUpdate(path: string, index: number): WorkerStatus<MediaInfo> {
   return {
     status: 'progress',
     progress: {
@@ -28,7 +28,7 @@ function buildSortUpdate(path: string, index: number): WorkerStatus<string, Sort
   };
 }
 
-function buildDone<T>(stepName: string, result: T[], total: number): WorkerStatus<string, SortArgument, T> {
+function buildDone<T>(stepName: string, result: T[], total: number): WorkerStatus<T> {
   return {
     status: 'done',
     progress: {
@@ -46,7 +46,7 @@ export class SortingService {
     private readonly argv: SortArgument,
   ) { }
 
-  public async sorting(files: MediaInfo[], chunk: MediaInfo[], update: (status: WorkerStatus<string, SortArgument, MediaInfo>) => void): Promise<void> {
+  public async sorting(files: MediaInfo[], chunk: MediaInfo[], update: (status: WorkerStatus<MediaInfo>) => void): Promise<void> {
     const folder: string = this.argv.folder;
     for (let index: number = 0 ; index < chunk.length ; ++index) {
       const media: MediaInfo = chunk[index];

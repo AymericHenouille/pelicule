@@ -47,8 +47,20 @@ export interface MediaInfo {
  * Model for the report.
  */
 export interface AnalyseReport {
+  /**
+   * The date of the report.
+   */
   reportDate: Date;
+  /**
+   * The folder that was analysed.
+   */
   folder: string;
+  /**
+   * The number of files that were analysed.
+   */
   size: number;
+  /**
+   * The details of the files that were analysed.
+   */
   photos: MediaInfo[];
 }

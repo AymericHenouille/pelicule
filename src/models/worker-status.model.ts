@@ -23,7 +23,7 @@ export interface WorkerProgress {
   processProgress: number;
 }
 
-export interface WorkerStatus<T, A, R> {
+export interface WorkerStatus<R> {
   status: 'done' | 'progress' | 'error';
   progress: WorkerProgress;
   result: R[];

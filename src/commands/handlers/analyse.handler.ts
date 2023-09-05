@@ -1,11 +1,11 @@
 import chalk from 'chalk';
 import { join } from 'path';
-import { AnalyseArgument } from '../models/arguments.model';
-import { CommandHandler } from '../models/handler.model';
-import { MediaInfo } from '../models/report.model';
-import { FileExplorer } from '../services/file-explorer.service';
-import { WorkerService } from '../services/worker.service';
-import { formatTimeMesage, log } from '../utils/log.util';
+import { AnalyseArgument } from '../../models/arguments.model';
+import { CommandHandler } from '../../models/handler.model';
+import { MediaInfo } from '../../models/report.model';
+import { FileExplorer } from '../../services/file-explorer.service';
+import { WorkerService } from '../../services/worker.service';
+import { formatTimeMesage, log } from '../../utils/log.util';
 
 type AnalyseData = {
   files: string[];
