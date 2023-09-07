@@ -3,6 +3,7 @@ export type TransformProgressStatus = 'progress' | 'done' | 'error';
 export type TransformProgress<T> = {
   status: TransformProgressStatus;
   result?: T[];
+  error?: Error;
   progress?: {
     stepName: string;
     target: string;
@@ -11,7 +12,7 @@ export type TransformProgress<T> = {
   };
 }
 
-export type TransformUpdater = (progress: TransformProgress) => void;
+export type TransformUpdater<T> = (progress: TransformProgress<T>) => void;
 
 /**
  * Transformer interface
@@ -50,5 +51,5 @@ export abstract class TransformerProcessor<T, R> {
     protected readonly transformers: Transformer<T, R>[], 
   ) { }
 
-  public abstract transform(inputList: T[], updateStatus: TransformUpdater): Promise<R[]>;
+  public abstract transform(inputList: T[], updateStatus: TransformUpdater<T>): Promise<R[]>;
 }

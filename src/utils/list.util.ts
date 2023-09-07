@@ -23,5 +23,6 @@ export function chunk<T>(list: T[], size: number): T[][] {
   const finalChunksNumber: number = Math.min(list.length, size);
   const chunkSize: number = Math.ceil(list.length / finalChunksNumber);
   const mapFn: MapFn = (_, index) => list.slice(index * chunkSize, (index + 1) * chunkSize);
-  return Array.from({ length: size }, mapFn);
+  return Array.from({ length: finalChunksNumber }, mapFn)
+    .filter((chunk: T[]) => chunk.length > 0);
 }

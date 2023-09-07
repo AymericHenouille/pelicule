@@ -1,3 +1,4 @@
+import { FileHandle, open } from 'fs/promises';
 import Jimp, { create } from 'jimp';
 import { MediaInfo } from '../models/report.model';
 import { Transformer } from '../models/transform.model';
@@ -21,7 +22,7 @@ function jimpCanHash(path: string): boolean {
  * HashTransformer is a transformer that allows to hash a list of files.
  * @template T The type of the argument.
  */
-export class HashTransformer<T> implements Transformer<Partial<MediaInfo>, Partial<MediaInfo>> {
+export class HashTransformer implements Transformer<Partial<MediaInfo>, Partial<MediaInfo>> {
 
   public readonly transformerName: string = 'Hashing';
 
@@ -33,8 +34,12 @@ export class HashTransformer<T> implements Transformer<Partial<MediaInfo>, Parti
 
   private async hashFile(path: string): Promise<string> {
     if (!jimpCanHash(path)) return '';
-    const image: Jimp = await create(path);
-    return image.hash();
+    const fileHandle: FileHandle = await open(path, 'r');
+    const buffer: Buffer = await fileHandle.readFile();
+    const image: Jimp = await create(buffer);
+    const hash: string = image.hash();
+    await fileHandle.close();
+    return hash;
   }
 
 }

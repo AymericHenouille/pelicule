@@ -2,6 +2,7 @@
  * Default argument for all commands.
  */
 export type Argument<T> = {
+  folder: string,
   recurcive: boolean,
   verbose: boolean,
   workers: number,
@@ -11,7 +12,6 @@ export type Argument<T> = {
  * Argument for analyse command.
  */
 export type AnalyseArgument = Argument<{
-  folder: string,
   recurcive: boolean,
   distance: number,
   output?: string,

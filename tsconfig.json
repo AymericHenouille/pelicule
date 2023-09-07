@@ -6,11 +6,11 @@
     "outDir": "bin",
     "resolveJsonModule": true,
     "esModuleInterop": true,
-    "noImplicitReturns": false,
-    "noUnusedLocals": false,
-    "sourceMap": false,
+    "noImplicitReturns": true,
+    "noUnusedLocals": true,
+    "sourceMap": true,
     "strict": true,
-    "noImplicitAny": false
+    "noImplicitAny": true
   },
   "compileOnSave": true,
   "include": ["./src/**/*.ts"],

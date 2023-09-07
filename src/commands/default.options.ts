@@ -8,7 +8,12 @@ import { Argv } from 'yargs';
  * @returns The yargs instance with the default optionse
  */
 export function defaultOptionBuilder<T>(yargs: Argv<T>): Argv<T> {
-  return yargs.option('recurcive', {
+  return yargs.positional('folder', {
+      describe: 'The target folder ',
+      type: 'string',
+      default: '.',
+    })
+    .option('recurcive', {
       alias: 'r',
       describe: 'Analyse the folder recursively',
       type: 'boolean',
@@ -24,6 +29,6 @@ export function defaultOptionBuilder<T>(yargs: Argv<T>): Argv<T> {
       alias: 'w',
       describe: 'Number of workers',
       type: 'number',
-      default: cpus().length,
+      default: Math.max(1, cpus().length - 1),
     });
 }

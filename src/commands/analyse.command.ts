@@ -11,11 +11,6 @@ export const analyseCommand: CommandModule<AnalyseArgument, AnalyseArgument> = {
   aliases: ['a'],
   describe: 'Analyse a folder content',
   builder: (yargs: Argv<AnalyseArgument>) => defaultOptionBuilder(yargs)
-    .positional('folder', {
-      describe: 'The folder to analyse',
-      type: 'string',
-      default: '.',
-    })
     .option('output', {
       alias: 'o',
       describe: 'Output the result to a file',

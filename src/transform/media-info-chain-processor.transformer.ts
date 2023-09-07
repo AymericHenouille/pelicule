@@ -1,3 +1,5 @@
+import chalk from 'chalk';
+import { basename } from 'path';
 import { MediaInfo } from '../models/report.model';
 import { Transformer } from '../models/transform.model';
 import { ChainTransformerProcessor } from './chain-processor.transformer';
@@ -12,7 +14,7 @@ export class MediaInfoChainTransformerProcessor extends ChainTransformerProcesso
   ) { 
     super(
       transformers, 
-      (item: Partial<MediaInfo>) => item.path ?? ''
+      (item: Partial<MediaInfo>) => chalk.blue(basename(item.path ?? ''))
     ); 
   }
 

@@ -5,7 +5,7 @@ import { PassThrough } from 'stream';
 import { Worker, isMainThread, parentPort, workerData } from 'worker_threads';
 import { Argument } from '../models/arguments.model';
 import { TransformProgress } from '../models/transform.model';
-import { Dispatcher, WorkerData, WorkerProgress, WorkerStatus } from '../models/worker-status.model';
+import { Dispatcher, WorkerData } from '../models/worker-status.model';
 import { DispatcherFn, dispatch } from '../transform/dispatcher.transform';
 import { chunk, shuffle } from '../utils/list.util';
 import { log } from '../utils/log.util';
@@ -13,8 +13,7 @@ import { log } from '../utils/log.util';
 if (!isMainThread) {
   const dispatcher: DispatcherFn<unknown> = dispatch(workerData);
   dispatcher((status: TransformProgress<unknown>) => parentPort?.postMessage(status))
-    .then((result: unknown[]) => parentPort?.postMessage({ status: 'done', result }))
-    .catch((error: Error) => parentPort?.postMessage({ status: 'error' }));
+    .catch((error: Error) => parentPort?.postMessage({ status: 'error', error }));
 }
 
 /**
@@ -66,16 +65,16 @@ export class WorkerService<A> {
     this.readChunkMessage({
       status: 'progress',
       progress: { 
-        processProgress: 0,
+        step: 0,
+        total: chunk.length,
         stepName: job,
         target: chalk.yellow('starting')
       },
-      result: [],
-    }, bar, () => { });
+    }, bar);
     const workerData: WorkerData<T, A> = { items, chunk, job, argv: this.argv };
     const worker: Worker = new Worker(WorkerService.URL, { workerData });
     return new Promise((resolve, reject) => worker
-      .on('message', (message: WorkerStatus<R>) => this.readChunkMessage(message, bar, resolve))
+      .on('message', (message: TransformProgress<R>) => this.readChunkMessage(message, bar, resolve, reject))
       .on('error', (error: ErrorEvent) => { bar.stop(); reject(error); })
       .on('exit', (code: number) => {
         if (code !== 0) {
@@ -93,17 +92,22 @@ export class WorkerService<A> {
    * @param bar The progress bar to update.
    * @param resolve The resolve function of the promise. It will be called when the job is done.
    */
-  private readChunkMessage<R>(message: WorkerStatus<R>, bar: SingleBar, resolve: (value: R[]) => void): void {
-    const progress: WorkerProgress = message.progress;
-    bar.update(progress.processProgress, {
-      stepName: chalk.bold(progress.stepName),
-      target: progress.target
+  private readChunkMessage<R>(message: TransformProgress<R>, bar: SingleBar, resolve?: (value: R[]) => void, reject?: (error: Error) => void): void {
+    const progress: TransformProgress<R[]>['progress'] = message.progress;
+    bar.update(progress?.step ?? 0, {
+      stepName: progress?.stepName,
+      target: progress?.target,
     });
-    if (message.status === 'done') resolve(message.result);
+    if (message.status === 'done') resolve?.((message?.result ?? []) as R[]);
+    if (message.status === 'error') {
+      bar.stop();
+      reject?.(message.error ?? new Error('Unknown error'));
+    }
   }
 
   private createMultibar<T>(chunks: T[][]): MultiBar {
     const chunksSize: number = Math.max(...chunks.map((chunk: T[]) => chunk.length));
+    const chunksSizeLength: number = chunksSize.toString().length;
     log(this.argv, `Running ${chalk.magenta(chunks.length)} chunks of ${chalk.bold(chunksSize)} jobs...`);
     return new MultiBar({
       format: '{stepName} [{bar}] {value}/{total} | {target}',
@@ -113,7 +117,7 @@ export class WorkerService<A> {
         if (type === 'total') return chalk.bold(value.toString());
         if (type === 'value') {
           const {length}: string = value.toString();
-          const padding: string = ' '.repeat(chunksSize - length);
+          const padding: string = ' '.repeat(chunksSizeLength - length);
           return chalk.gray(padding + value);
         }
         return value.toString();
