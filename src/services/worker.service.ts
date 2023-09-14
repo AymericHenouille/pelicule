@@ -110,7 +110,7 @@ export class WorkerService<A> {
     const chunksSizeLength: number = chunksSize.toString().length;
     log(this.argv, `Running ${chalk.magenta(chunks.length)} chunks of ${chalk.bold(chunksSize)} jobs...`);
     return new MultiBar({
-      format: '{stepName} [{bar}] {value}/{total} | {target}',
+      format: '{stepName} [{bar}] {value}/{total} {target}',
       hideCursor: true,
       stream: this.argv.verbose ? process.stdout : new PassThrough(),
       formatValue: (value: number, _, type: string) => {

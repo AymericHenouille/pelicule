@@ -65,7 +65,7 @@ async function findFilesToAnalyse(fileExplorer: FileExplorer, pelFile: string, {
  * @returns The formatted report.
  */
 function formatReport(mediaInfos: MediaInfo[], oldAnalysis: MediaInfo[], startTick: number, pelFile: string): string {
-  const time: string = formatTimeMesage(performance.now() - startTick);
+  const time: string = formatTimeMesage(startTick);
   return `
   Report saved to ${chalk.gray(pelFile)}.
 

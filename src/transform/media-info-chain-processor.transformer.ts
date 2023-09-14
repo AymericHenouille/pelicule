@@ -14,7 +14,10 @@ export class MediaInfoChainTransformerProcessor extends ChainTransformerProcesso
   ) { 
     super(
       transformers, 
-      (item: Partial<MediaInfo>) => chalk.blue(basename(item.path ?? ''))
+      (item: Partial<MediaInfo>) => {
+        const filename: string = basename(item.path ?? '');
+        return `| ${chalk.blue(filename)}`;
+      }
     ); 
   }
 

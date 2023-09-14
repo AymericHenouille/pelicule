@@ -1,7 +1,7 @@
 import { compareHashes } from 'jimp';
-import { AnalyseArgument } from '../models/arguments.model';
-import { MediaInfo } from '../models/report.model';
-import { Transformer } from '../models/transform.model';
+import { AnalyseArgument } from '../../models/arguments.model';
+import { MediaInfo } from '../../models/report.model';
+import { Transformer } from '../../models/transform.model';
 
 /**
  * CompareTransformer is a transformer that allows to compare a list of files.

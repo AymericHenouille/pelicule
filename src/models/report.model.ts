@@ -26,7 +26,7 @@ export interface MediaInfo {
   path: string;
   /**
    * The hash of the file.
-   * undefined if the file is not hashed.
+   * '' if the file can't be hashed.
    */
   hash: string | null;
   /**
