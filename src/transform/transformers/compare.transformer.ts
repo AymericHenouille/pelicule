@@ -2,6 +2,7 @@ import { compareHashes } from 'jimp';
 import { AnalyseArgument } from '../../models/arguments.model';
 import { MediaInfo } from '../../models/report.model';
 import { Transformer } from '../../models/transform.model';
+import { RelativePathTransformer } from './relative-path.transformer';
 
 /**
  * CompareTransformer is a transformer that allows to compare a list of files.
@@ -33,7 +34,8 @@ export class CompareTransformer implements Transformer<Partial<MediaInfo>, Parti
    * @returns The item with the list of similar files.
    */
   public async transform(item: Partial<MediaInfo>): Promise<Partial<MediaInfo>> {
-    const copy: string[] = this.findCopy(item.hash ?? '');
+    const mediaInfos: Partial<MediaInfo>[] = await Promise.all(this.findCopy(item.hash ?? ''));
+    const copy: string[] = mediaInfos.map((mediaInfo: Partial<MediaInfo>) => mediaInfo.path ?? '');
     return { ...item, copy };
   }
 
@@ -42,11 +44,12 @@ export class CompareTransformer implements Transformer<Partial<MediaInfo>, Parti
    * @param hash The hash to compare.
    * @returns The list of similar files.
    */
-  private findCopy(hash: string): string[] {
+  private findCopy(hash: string): Promise<Partial<MediaInfo>>[] {
+    const relativeTransformer: RelativePathTransformer = new RelativePathTransformer(this.argv.folder);
     return this.files.filter((file: MediaInfo) => file.hash !== undefined && file.hash !== null)
       .filter((file: MediaInfo) => file.hash !== hash)
       .filter((file: MediaInfo) => compareHashes(file?.hash ?? '', hash) <= this.argv.distance)
-      .map((file: MediaInfo) => file.path);
+      .map((file: MediaInfo) => relativeTransformer.transform(file));
   }
 
 }
